@@ -20,12 +20,13 @@ install -m640 udev/rules.d/99-icpc.rules            /etc/udev/rules.d/
 
 ## Testing
 
-To test, you can host `icpc-server`. You can then use it like so:
+To test, you can host `icpc-server`. To do this, run:
 
-```
-GET localhost:8080/competition-status
+```sh
+(cd icpc-server && go run .)
 ```
 
-By default, `ongoing` is returned. To change this, edit `icpc-server/main.go`'s
-`currentCompetitionStatus` to `CompetitionFinished`. This will allow USBs to be
-mounted.
+The server will expose a single endpoint, `/competition-status`, which returns
+the current competition status. By default, `ongoing` is returned. To change
+this, edit `icpc-server/main.go`'s `currentCompetitionStatus` to
+`CompetitionFinished`. This will allow USBs to be mounted.
