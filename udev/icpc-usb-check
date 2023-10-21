@@ -1,0 +1,9 @@
+#!/bin/sh
+if [ -z "$DEVPATH" ]; then
+	echo "\$DEVPATH is empty, potential misuse detected. Exiting." >&2
+	exit 1
+fi
+
+if ! systemctl start --now icpc-usb-check 2> /dev/null; then
+	echo 0 > /sys$DEVPATH/authorized
+fi

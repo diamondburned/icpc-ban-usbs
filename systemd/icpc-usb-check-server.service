@@ -1,0 +1,6 @@
+[Unit]
+Description=Check that the ICPC server allows USBs to be mounted
+
+[Service]
+Type=oneshot
+ExecStart=/etc/icpc/systemd/icpc-usb-check-server.sh

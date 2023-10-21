@@ -1,0 +1,1 @@
+SUBSYSTEM=="usb", DRIVER=="usb-storage", RUN+="/etc/icpc/udev/icpc-usb-check"
