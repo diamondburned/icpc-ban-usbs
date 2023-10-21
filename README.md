@@ -30,3 +30,55 @@ The server will expose a single endpoint, `/competition-status`, which returns
 the current competition status. By default, `ongoing` is returned. To change
 this, edit `icpc-server/main.go`'s `currentCompetitionStatus` to
 `CompetitionFinished`. This will allow USBs to be mounted.
+
+## Working Mechanism
+
+We're using `udev` to run a script that directly disables the USB in the kernel
+if the competition is ongoing. This is done in `udev/icpc-usb-check`.
+
+However, because of [systemd-udevd's sandboxing](https://sandboxdb.org/service/systemd-udevd.service.html),
+we cannot use networking in the udev script. To work around this, we use a
+one-shot systemd service that calls `wget`, then call `systemctl start --now`
+in the udev script. This avoids the network call entirely in the udev script.
+It only works because `systemctl` will block until the one-shot service is
+done.
+
+### Diagram
+
+```
+┌─ ICPC competition machine ─────────────────┐
+│                                            │
+│  ┌─────────┐    ┌─────────┐                │
+│  │   USB   ├────►  Linux  │                │
+│  └─────────┘    └────┬──▲─┘                │
+│                      │  │                  │
+│       ┌──────────────┘  │                  │
+│       │                 │                  │
+│  ┌────▼────┐    ┌───────┴────────┐         │
+│  │  udev   ├────► icpc-usb-check │         │
+│  └─────────┘    └───────┬────────┘         │
+│                         │                  │
+│       ┌─────────────────┘                  │
+│       │                                    │
+│  ┌────▼────┐    ┌───────────────────────┐  │
+│  │ systemd ├────► icpc-usb-check-server │  │
+│  └─────────┘    └───────────┬───────────┘  │
+│                             │              │
+│                    ┌────────┘              │
+│                    │                       │
+│                 ┌──▼───┐                   │
+│                 │ wget │                   │
+│                 └──┬───┘                   │
+│                    │                       │
+└─────────────────── │ ──────────────────────┘
+                     │
+┌─ ICPC server ───── │ ──────────────────────┐
+│                    │                       │
+│  ┌─────────────────▼────────────────────┐  │
+│  │ Competition Server                   │  │
+│  │   - code submission                  │  │
+│  │   - competition status report        │  │
+│  └──────────────────────────────────────┘  │
+│                                            │
+└────────────────────────────────────────────┘
+```
